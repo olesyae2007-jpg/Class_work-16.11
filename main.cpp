@@ -2,137 +2,271 @@
 
 namespace
 {
-    enum Color {RED, GREEN, BLUE};
-    class Planar;
-    class Colored;
-    class Point;
-    class Vector;
-    class ColoredPoint;
-    class Brush;
+  enum Color {RED, GREEN, BLUE};
+  class Planar;
+  class Colored;
+  class Point;
+  class Vector;
+  class ColoredPoint;
+  class Brush;
+  class Circle;
+  class ColoredCircle;
 
-    class Planar
+  class Planar
+  {
+  public:
+    virtual ~Planar() = default;
+
+    virtual std::ostream& info(std::ostream& out) = 0;
+    virtual int x() const = 0;
+    virtual int y() const = 0;
+    virtual int abs_sqr() const = 0; 
+  };
+
+  class Colored
+  {
+  public:
+    virtual ~Colored() = default;
+
+    virtual Color getColor() const = 0;
+    virtual void setColor(Color color) = 0;
+  };
+
+  class Point: public Planar
+  {
+  public:
+    Point(int x, int y):
+      x_(x),
+      y_(y)
+    {}
+    virtual ~Point() = default;
+
+    virtual std::ostream& info(std::ostream& out) override
     {
-    public:
-        virtual ~Planar() = default;
+      return out << "Point";
+    }
 
-        virtual std::ostream& info(std::ostream& out) = 0;
-        virtual int x() const = 0;
-        virtual int y() const = 0;
-        virtual int abs_sqr() const = 0;
-    };
-
-    class Colored
+    virtual int x() const override
     {
-    public:
-        virtual ~Colored() = default;
-
-        virtual Color getColor() const = 0;
-        virtual void setColor(Color color) = 0;
-    };
-
-    class Point: public Planar
+      return x_;
+    }
+    virtual int y() const override
     {
-    public:
-        Point(int x, int y) : x_(x), y_(y) {}
-        virtual ~Point() = default;
-
-        virtual std::ostream& info(std::ostream& out) override { return out << "Point"; }
-        virtual int x() const override { return x_; }
-        virtual int y() const override { return y_; }
-        virtual int abs_sqr() const override { return x_ * x_ + y_ * y_; }
-
-    private:
-        int x_, y_;
-    };
-
-    class Vector: public Planar
+      return y_;
+    }
+    virtual int abs_sqr() const override
     {
-    public:
-        Vector(Point a, Point b) : a_(a), b_(b) {}
-        virtual ~Vector() = default;
+      return x_ * x_ + y_ * y_;
+    }
+  private:
+    int x_, y_;
+  };
 
-        virtual std::ostream& info(std::ostream& out) override { return out << "Vector"; }
-        virtual int x() const override { return b_.x() - a_.x(); }
-        virtual int y() const override { return b_.y() - a_.y(); }
-        virtual int abs_sqr() const override { return (x() * x() + y() * y()); }
+  class Vector: public Planar
+  {
+  public:
+    Vector(Point a, Point b):
+      a_(a),
+      b_(b)
+    {}
+    virtual ~Vector() = default;
 
-    private:
-        Point a_, b_;
-    };
-
-    class ColoredPoint: public Planar, public Colored
+    virtual std::ostream& info(std::ostream& out) override
     {
-    public:
-        ColoredPoint(Point p, Color color) : p_(p), cl_(color) {}
-        virtual ~ColoredPoint() = default;
+      return out << "Vector";
+    }
 
-        virtual std::ostream& info(std::ostream& out) override { return out << "Colored point"; }
-        virtual int x() const override { return p_.x(); }
-        virtual int y() const override { return p_.y(); }
-        virtual int abs_sqr() const override { return p_.abs_sqr(); }
-        virtual Color getColor() const override { return cl_; }
-        virtual void setColor(Color color) override { cl_ = color; }
-
-    private:
-        Point p_;
-        Color cl_;
-    };
-
-    class Brush: public Colored
+    virtual int x() const override
     {
-    public:
-        Brush(Color color) : cl_(color) {}
-        virtual ~Brush() = default;
+      return b_.x() - a_.x();
+    }
+    virtual int y() const override
+    {
+      return b_.y() - a_.y();
+    }
+    virtual int abs_sqr() const override
+    {
+      return (x() * x() + y() * y());
+    }
+  private:
+    Point a_, b_;
+  };
 
-        virtual Color getColor() const override { return cl_; }
-        virtual void setColor(Color color) override { cl_ = color; }
+  class Circle: public Planar
+  {
+  public:
+    Circle(Point center, int r):
+      center_(center),
+      r_(r)
+    {}
+    virtual ~Circle() = default;
 
-    private:
-        Color cl_;
-    };
+    virtual std::ostream& info(std::ostream& out) override
+    {
+      return out << "Circle";
+    }
+
+    virtual int x() const override
+    {
+      return center_.x();
+    }
+    virtual int y() const override
+    {
+      return center_.y();
+    }
+    virtual int abs_sqr() const override
+    {
+      return r_ * r_;
+    }
+
+    double sqr() const
+    {
+      return 3.1415926535 * r_ * r_;
+    }
+
+    void move(Point p)
+    {
+      center_ = p;
+    }
+
+    void resize(int r)
+    {
+      r_ = r;
+    }
+
+  private:
+    Point center_;
+    int r_;
+  };
+
+  class ColoredCircle: public Circle, public Colored
+  {
+  public:
+    ColoredCircle(Point center, int r, Color color):
+      Circle(center, r),
+      cl_(color)
+    {}
+    virtual ~ColoredCircle() = default;
+
+    virtual std::ostream& info(std::ostream& out) override
+    {
+      return out << "Colored Circle";
+    }
+
+    virtual Color getColor() const override
+    {
+      return cl_;
+    }
+    virtual void setColor(Color color) override
+    {
+      cl_ = color;
+    }
+
+  private:
+    Color cl_;
+  };
+
+  class ColoredPoint: public Planar, public Colored
+  {
+  public:
+    ColoredPoint(Point p, Color color):
+      p_(p),
+      cl_(color)
+    {}
+    virtual ~ColoredPoint() = default;
+
+    virtual std::ostream& info(std::ostream& out) override
+    {
+      return out << "Colored point";
+    }
+
+    virtual int x() const override
+    {
+      return p_.x();
+    }
+    virtual int y() const override
+    {
+      return p_.y();
+    }
+    virtual int abs_sqr() const override
+    {
+      return p_.abs_sqr();
+    }
+    virtual Color getColor() const override
+    {
+      return cl_;
+    }
+    virtual void setColor(Color color) override
+    {
+      cl_ = color;
+    }
+  private:
+    Point p_;
+    Color cl_;
+  };
+
+  class Brush: public Colored
+  {
+  public:
+    Brush(Color color):
+      cl_(color)
+    {}
+    virtual ~Brush() = default;
+
+    virtual Color getColor() const override
+    {
+      return cl_;
+    }
+    virtual void setColor(Color color) override
+    {
+      cl_ = color;
+    }
+  private:
+    Color cl_;
+  };
 }
 
 std::ostream& print_abs_sqr(std::ostream& out, Planar* pl)
 {
-    return pl->info(out) << ' ' << pl->abs_sqr();
+  return pl->info(out) << ' ' << pl->abs_sqr();
 }
 
 void del(Planar* pls[], size_t size)
 {
-    for (size_t i = 0; i < size; i++)
-    {
-        delete pls[i];
-    }
+  for (size_t i = 0; i < size; i++)
+  {
+    delete pls[i];
+  }
 }
 
 int main()
 {
-    const size_t cap = 6;
-    Planar* pls[cap];
-    size_t size = 0;
-
-    try
-    {
-        pls[size++] = new Point(1, 2);
-        pls[size++] = new Point(3, 4);
-        pls[size++] = new Vector(Point(1, 2), Point(3, 4));
-        pls[size++] = new Vector(Point(3, 4), Point(1, 2));
-        pls[size++] = new ColoredPoint(Point(1, 2), Color::RED);
-        pls[size++] = new ColoredPoint(Point(3, 4), Color::GREEN);
-    }
-    catch (const std::exception& e)
-    {
-        del(pls, size);
-        std::cerr << e.what() << '\n';
-        return 1;
-    }
-
-    for (size_t i = 0; i < size; i++)
-    {
-        print_abs_sqr(std::cout, pls[i]) << '\n';
-    }
-
+  const size_t cap = 10;
+  Planar* pls[cap];
+  size_t size = 0;
+  
+  try
+  {
+    pls[size++] = new Point(1, 2);
+    pls[size++] = new Point(3, 4);
+    pls[size++] = new Vector(Point(1, 2), Point(3, 4));
+    pls[size++] = new Vector(Point(3, 4), Point(1, 2));
+    pls[size++] = new ColoredPoint(Point(1, 2), Color::RED);
+    pls[size++] = new ColoredPoint(Point(3, 4), Color::GREEN);
+    
+    pls[size++] = new Circle(Point(5, 5), 10);
+    pls[size++] = new ColoredCircle(Point(0, 0), 7, Color::BLUE);
+  }
+  catch (const std::exception& e)
+  {
     del(pls, size);
+    std::cerr << e.what() << '\n';
+  }
 
-    return 0;
+  for (size_t i = 0; i < size; i++)
+  {
+    print_abs_sqr(std::cout, pls[i]) << '\n';
+  }
+
+  del(pls, size);
 }
